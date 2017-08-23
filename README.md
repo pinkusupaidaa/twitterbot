@@ -1,2 +1,2 @@
-# twittwebot
-En simpel bott som retweetar och markerar tweet som favorite
+# twitterbot
+En simpel bot som retweetar och markerar tweet som favorite
