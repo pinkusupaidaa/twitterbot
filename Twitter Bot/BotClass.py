@@ -2,7 +2,11 @@ import datetime
 import tweepy
 import json
 import os
+import threading
+import time
 from time import sleep
+
+print_lock = threading.Lock()
 
 class authorization:
     def __init__(self, Consumer_key, Consumer_secret, Access_token, Access_secret):
@@ -24,9 +28,10 @@ class TwitterBot:
 
         self.myBot = self.api.get_user(screen_name='@SkattBot')
 
-        self.since_id_var = 899171837040525312
+        self.since_id_var = 901728140011163652
         self.retweet_and_follow = Retweet_and_follow
         self.favorite_tweet = Favorite_tweet
+        self.time_to_sleep = 10
 
 
     def set_date(self, x):
@@ -39,22 +44,23 @@ class TwitterBot:
     def set_hashtag(self, tag):
         self.search_for_hashtag = tag
 
+    def set_time_to_sleep(self, ze_time):
+        self.time_to_sleep =  ze_time
+
     def start_retweeting(self):
-        #public_tweets = self.api.user_timeline(screen_name="@AntonStarck", count=5)
-        #for tweet in public_tweets:
-        #    print(tweet.text)
-        #    sleep(2)
-        #self.write_to_file("test.txt", public_tweets)
         while 1:
-            for tweet in tweepy.Cursor(self.api.search, q=self.search_for_hashtag, since=self.search_date).items():
+            start = time.time()
+            for tweet in tweepy.Cursor(self.api.search, q=self.search_for_hashtag, since_id=self.since_id_var).items():
                 try:
                     if tweet.user.id == self.myBot.id: #If you yourself has already retweeted it, just continue algorithm
                         continue
-                    print("\n\nFound tweet by: @" + tweet.user.screen_name)
+                    with print_lock:
+                        print("\n\nFound tweet by: @" + tweet.user.screen_name)
                     if (tweet.retweeted == False) or (tweet.favorited == False):
                         tweet.retweet()
-                        print("Retweeted tweet from @" + tweet.user.screen_name)
-                        print(tweet.id)
+                        with print_lock:
+                            print("Retweeted tweet from @" + tweet.user.screen_name)
+                            print(tweet.id)
 
                         if tweet.id > self.since_id_var:
                             self.since_id_var = tweet.id
@@ -65,23 +71,32 @@ class TwitterBot:
                         if self.retweet_and_follow:
                              if(tweet.user.following == False):
                                  tweet.user.follow()
-                                 print("Followed the user")
+                                 with print_lock:
+                                    print("Followed the user")
 
                 except tweepy.TweepError as e:
                     if tweet.id > self.since_id_var:
                         self.since_id_var = tweet.id
-                        print(self.since_id_var)
-                    print(tweet.id)
-                    print(e.reason)
+                        with print_lock:
+                            print(self.since_id_var)
+                    with print_lock:
+                        print(tweet.id)
+                        print(e.reason)
                     if "429" in e.reason or "185" in e.reason:
                         sleep(1800)
-                        # else:
-                        # sleep(5)
                     continue
                 except StopIteration:
                     break
-            print("Pausar botten i 30 minuter")
-            sleep(1800)
+            with print_lock:
+                print("Pausar botten i " + str(self.time_to_sleep / 60) + " minuter")
+                print("Loopen kördes på tiden: ", time.time() - start)
+                print(threading.current_thread().name)
+            sleep(self.time_to_sleep)
+
+    def retweeting_thread(self):
+        t1 = threading.Thread(target=self.start_retweeting)
+        t1.daemon = True
+        t1.start()
 
     def write_to_file(self, filename, data):
         a = []
@@ -97,3 +112,4 @@ class TwitterBot:
             with open(filename, "a") as f:
                 for item in a:
                     f.write(item + '\n')
+
