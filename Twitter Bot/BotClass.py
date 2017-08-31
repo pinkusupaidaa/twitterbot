@@ -26,7 +26,7 @@ class TwitterBot:
         self.auth.secure = True
         self.api = tweepy.API(self.auth)
 
-        self.myBot = self.api.get_user(screen_name='@SkattBot')
+        self.myBot = self.api.get_user(screen_name= #NAME OF THE ACCOUNT GOES HERE, EX: @YourName)
 
         self.since_id_var = 901728140011163652
         self.retweet_and_follow = Retweet_and_follow
