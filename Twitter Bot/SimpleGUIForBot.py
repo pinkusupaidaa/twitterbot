@@ -36,6 +36,7 @@ def save_settings_to_file():
 
 def load_settings_file():
     read_settings = []
+
     
     if not os.path.isfile("settings.txt"):
         print("No file namned settings.txt exists")
